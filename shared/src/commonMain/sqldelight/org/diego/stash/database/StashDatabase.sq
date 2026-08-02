@@ -1,0 +1,62 @@
+CREATE TABLE food_item (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT,
+    quantity REAL,
+    unit TEXT,
+    storage_location TEXT,
+    purchase_date TEXT,
+    expiry_date TEXT NOT NULL,
+    expiry_type TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    discard_reason TEXT,
+    barcode TEXT,
+    notes TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+selectAllItems:
+SELECT * FROM food_item WHERE status = 'active' ORDER BY expiry_date ASC;
+
+selectItemById:
+SELECT * FROM food_item WHERE id = ?;
+
+insertItem:
+INSERT INTO food_item (
+    name, category, quantity, unit, storage_location, purchase_date, expiry_date, expiry_type, status, discard_reason, barcode, notes, created_at, updated_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateItem:
+UPDATE food_item SET
+    name = ?, category = ?, quantity = ?, unit = ?, storage_location = ?, purchase_date = ?, expiry_date = ?, expiry_type = ?, status = ?, discard_reason = ?, barcode = ?, notes = ?, updated_at = ?
+WHERE id = ?;
+
+deleteItem:
+DELETE FROM food_item WHERE id = ?;
+
+updateQuantity:
+UPDATE food_item SET quantity = ?, updated_at = ? WHERE id = ?;
+
+markAsConsumed:
+UPDATE food_item SET status = 'consumed', updated_at = ? WHERE id = ?;
+
+markAsDiscarded:
+UPDATE food_item SET status = 'discarded', discard_reason = ?, updated_at = ? WHERE id = ?;
+
+selectExpiringSoon:
+SELECT * FROM food_item
+WHERE status = 'active'
+AND expiry_date <= ?
+ORDER BY expiry_date ASC;
+
+countExpiringBetween:
+SELECT COUNT(*) FROM food_item
+WHERE status = 'active'
+AND expiry_date >= ?
+AND expiry_date <= ?;
+
+countExpired:
+SELECT COUNT(*) FROM food_item
+WHERE status = 'active'
+AND expiry_date < ?;
