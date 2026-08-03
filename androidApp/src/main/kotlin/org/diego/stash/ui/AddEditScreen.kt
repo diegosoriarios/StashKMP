@@ -20,6 +20,35 @@ import kotlinx.datetime.*
 fun AddEditScreen(navController: NavController, itemId: Long, viewModel: AddEditViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     
+    LaunchedEffect(itemId) {
+        viewModel.loadItem(itemId)
+    }
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = state.expiryDate.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+    )
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        val date = Instant.fromEpochMilliseconds(it).toLocalDateTime(TimeZone.UTC).date
+                        viewModel.onExpiryDateChanged(date)
+                    }
+                    showDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
     Scaffold(
         topBar = { TopAppBar(title = { Text(if (itemId == 0L) "Add Food" else "Edit Food") }) }
     ) { padding ->
@@ -64,7 +93,15 @@ fun AddEditScreen(navController: NavController, itemId: Long, viewModel: AddEdit
 
             Spacer(modifier = Modifier.height(8.dp))
             
-            TextField(value = state.expiryDate.toString(), onValueChange = { /* In real app, use DatePicker */ }, label = { Text("Expiry Date (YYYY-MM-DD)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedCard(
+                onClick = { showDatePicker = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Expiry Date", style = MaterialTheme.typography.labelMedium)
+                    Text(state.expiryDate.toString(), style = MaterialTheme.typography.bodyLarge)
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
             

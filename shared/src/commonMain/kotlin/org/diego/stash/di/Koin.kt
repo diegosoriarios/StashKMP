@@ -30,7 +30,8 @@ fun commonModule() = module {
     
     factory { DashboardViewModel(get()) }
     factory { InventoryViewModel(get()) }
-    factory { AddEditViewModel(get()) }
+    factory { AddEditViewModel(get(), get()) }
+    factory { SettingsViewModel(get()) }
 }
 
 expect fun platformModule(): Module

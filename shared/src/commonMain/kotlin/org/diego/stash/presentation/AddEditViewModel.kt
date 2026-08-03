@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.*
 import org.diego.stash.domain.model.*
 import org.diego.stash.domain.repository.FoodRepository
+import org.diego.stash.platform.NotificationScheduler
 
 data class AddEditState(
     val id: Long = 0,
@@ -28,10 +29,34 @@ data class AddEditState(
     val error: String? = null
 )
 
-class AddEditViewModel(private val repository: FoodRepository) : ViewModel() {
+class AddEditViewModel(
+    private val repository: FoodRepository,
+    private val notificationScheduler: NotificationScheduler
+) : ViewModel() {
 
     private val _state = MutableStateFlow(AddEditState())
     val state: StateFlow<AddEditState> = _state.asStateFlow()
+
+    fun loadItem(id: Long) {
+        if (id == 0L) return
+        viewModelScope.launch {
+            repository.getItemById(id)?.let { item ->
+                _state.update { it.copy(
+                    id = item.id,
+                    name = item.name,
+                    category = item.category,
+                    quantity = item.quantity,
+                    unit = item.unit,
+                    storageLocation = item.storageLocation,
+                    purchaseDate = item.purchaseDate,
+                    expiryDate = item.expiryDate,
+                    expiryType = item.expiryType,
+                    notes = item.notes ?: "",
+                    barcode = item.barcode ?: ""
+                ) }
+            }
+        }
+    }
 
     fun onNameChanged(name: String) = _state.update { it.copy(name = name) }
     fun onCategoryChanged(category: Category) = _state.update { it.copy(category = category) }
@@ -84,6 +109,9 @@ class AddEditViewModel(private val repository: FoodRepository) : ViewModel() {
             } else {
                 repository.updateItem(item)
             }
+            
+            notificationScheduler.scheduleExpiryReminders(item)
+
             _state.update { it.copy(isSaving = false) }
         }
     }

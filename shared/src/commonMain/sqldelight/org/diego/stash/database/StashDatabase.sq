@@ -8,7 +8,7 @@ CREATE TABLE food_item (
     purchase_date TEXT,
     expiry_date TEXT NOT NULL,
     expiry_type TEXT,
-    status TEXT NOT NULL DEFAULT 'active',
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
     discard_reason TEXT,
     barcode TEXT,
     notes TEXT,
@@ -17,7 +17,7 @@ CREATE TABLE food_item (
 );
 
 selectAllItems:
-SELECT * FROM food_item WHERE status = 'active' ORDER BY expiry_date ASC;
+SELECT * FROM food_item WHERE status = 'ACTIVE' ORDER BY expiry_date ASC;
 
 selectItemById:
 SELECT * FROM food_item WHERE id = ?;
@@ -39,24 +39,24 @@ updateQuantity:
 UPDATE food_item SET quantity = ?, updated_at = ? WHERE id = ?;
 
 markAsConsumed:
-UPDATE food_item SET status = 'consumed', updated_at = ? WHERE id = ?;
+UPDATE food_item SET status = 'CONSUMED', updated_at = ? WHERE id = ?;
 
 markAsDiscarded:
-UPDATE food_item SET status = 'discarded', discard_reason = ?, updated_at = ? WHERE id = ?;
+UPDATE food_item SET status = 'DISCARDED', discard_reason = ?, updated_at = ? WHERE id = ?;
 
 selectExpiringSoon:
 SELECT * FROM food_item
-WHERE status = 'active'
+WHERE status = 'ACTIVE'
 AND expiry_date <= ?
 ORDER BY expiry_date ASC;
 
 countExpiringBetween:
 SELECT COUNT(*) FROM food_item
-WHERE status = 'active'
+WHERE status = 'ACTIVE'
 AND expiry_date >= ?
 AND expiry_date <= ?;
 
 countExpired:
 SELECT COUNT(*) FROM food_item
-WHERE status = 'active'
+WHERE status = 'ACTIVE'
 AND expiry_date < ?;
