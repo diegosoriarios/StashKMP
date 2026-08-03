@@ -14,12 +14,40 @@ import org.diego.stash.domain.model.*
 import org.diego.stash.presentation.AddEditViewModel
 import org.koin.androidx.compose.koinViewModel
 import kotlinx.datetime.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditScreen(navController: NavController, itemId: Long, viewModel: AddEditViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
     
+    var showScanner by remember { mutableStateOf(false) }
+    
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            showScanner = true
+        }
+    }
+
+    if (showScanner) {
+        ModalBottomSheet(onDismissRequest = { showScanner = false }) {
+            Box(modifier = Modifier.fillMaxHeight(0.6f)) {
+                BarcodeScannerView(onBarcodeScanned = { code ->
+                    viewModel.scanBarcode(code)
+                    showScanner = false
+                })
+            }
+        }
+    }
+
     LaunchedEffect(itemId) {
         viewModel.loadItem(itemId)
     }
@@ -53,7 +81,15 @@ fun AddEditScreen(navController: NavController, itemId: Long, viewModel: AddEdit
         topBar = { TopAppBar(title = { Text(if (itemId == 0L) "Add Food" else "Edit Food") }) }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp).verticalScroll(rememberScrollState())) {
-            Button(onClick = { /* Launch Barcode Scanner */ }, modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = { 
+                    when (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)) {
+                        PackageManager.PERMISSION_GRANTED -> showScanner = true
+                        else -> permissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                }, 
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Icon(Icons.Default.QrCodeScanner, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Scan Barcode")
@@ -62,6 +98,14 @@ fun AddEditScreen(navController: NavController, itemId: Long, viewModel: AddEdit
             Spacer(modifier = Modifier.height(16.dp))
             
             TextField(value = state.name, onValueChange = { viewModel.onNameChanged(it) }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
+            
+            if (state.isScanning) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+            }
+            
+            state.error?.let { error ->
+                Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
             
             Spacer(modifier = Modifier.height(8.dp))
             
