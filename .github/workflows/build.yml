@@ -55,7 +55,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-release-apk
@@ -98,8 +98,47 @@ jobs:
           zip -r Stash.ipa Payload
           rm -rf Payload
 
-      - name: Upload IPA
+      - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-release-ipa
           path: Stash.ipa
+
+  release:
+    needs: [build-android, build-ios]
+    # Run if at least one build job ran (i.e. didn't get skipped due to both failing)
+    if: |
+      always() &&
+      (needs.build-android.result == 'success' || needs.build-android.result == 'skipped') &&
+      (needs.build-ios.result == 'success' || needs.build-ios.result == 'skipped') &&
+      (needs.build-android.result == 'success' || needs.build-ios.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Android APK
+        if: ${{ needs.build-android.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-apk
+          path: artifacts/android
+
+      - name: Download iOS IPA
+        if: ${{ needs.build-ios.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-release-ipa
+          path: artifacts/ios
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Release v${{ github.event.inputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/android/*.apk
+            artifacts/ios/*.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
