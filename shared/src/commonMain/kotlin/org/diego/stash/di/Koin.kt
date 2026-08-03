@@ -8,6 +8,7 @@ import org.diego.stash.domain.repository.FoodRepository
 import org.diego.stash.presentation.AddEditViewModel
 import org.diego.stash.presentation.DashboardViewModel
 import org.diego.stash.presentation.InventoryViewModel
+import org.diego.stash.presentation.SettingsViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.KoinAppDeclaration
@@ -31,7 +32,7 @@ fun commonModule() = module {
     factory { DashboardViewModel(get()) }
     factory { InventoryViewModel(get()) }
     factory { AddEditViewModel(get(), get()) }
-    factory { SettingsViewModel(get()) }
+    factory { SettingsViewModel(get(), get()) }
 }
 
 expect fun platformModule(): Module
