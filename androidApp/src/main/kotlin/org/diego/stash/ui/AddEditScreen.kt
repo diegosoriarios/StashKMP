@@ -77,6 +77,12 @@ fun AddEditScreen(navController: NavController, itemId: Long, viewModel: AddEdit
         }
     }
 
+    LaunchedEffect(state.isSaved) {
+        if (state.isSaved) {
+            navController.popBackStack()
+        }
+    }
+
     Scaffold(
         topBar = { TopAppBar(title = { Text(if (itemId == 0L) "Add Food" else "Edit Food") }) }
     ) { padding ->
@@ -97,7 +103,18 @@ fun AddEditScreen(navController: NavController, itemId: Long, viewModel: AddEdit
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            TextField(value = state.name, onValueChange = { viewModel.onNameChanged(it) }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
+            TextField(
+                value = state.name, 
+                onValueChange = { viewModel.onNameChanged(it) }, 
+                label = { Text("Name") }, 
+                modifier = Modifier.fillMaxWidth(),
+                isError = state.nameError != null,
+                supportingText = {
+                    state.nameError?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            )
             
             if (state.isScanning) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
@@ -151,9 +168,8 @@ fun AddEditScreen(navController: NavController, itemId: Long, viewModel: AddEdit
             
             Button(onClick = { 
                 viewModel.saveItem()
-                navController.popBackStack()
-            }, modifier = Modifier.fillMaxWidth()) {
-                Text("Save Item")
+            }, modifier = Modifier.fillMaxWidth(), enabled = !state.isSaving) {
+                Text(if (state.isSaving) "Saving..." else "Save Item")
             }
         }
     }

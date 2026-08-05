@@ -34,7 +34,7 @@ fun InventoryScreen(navController: NavController, viewModel: InventoryViewModel 
             )
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn {
-                items(state.items.filter { it.name.contains(state.searchQuery, ignoreCase = true) }) { item ->
+                items(state.filteredItems) { item ->
                     FoodItemRow(item, 
                         onConsume = { viewModel.consumeItem(item.id) },
                         onReduce = { viewModel.reduceQuantity(item.id, item.quantity) },

@@ -26,7 +26,9 @@ data class AddEditState(
     val barcode: String = "",
     val isScanning: Boolean = false,
     val isSaving: Boolean = false,
-    val error: String? = null
+    val nameError: String? = null,
+    val error: String? = null,
+    val isSaved: Boolean = false
 )
 
 class AddEditViewModel(
@@ -58,7 +60,7 @@ class AddEditViewModel(
         }
     }
 
-    fun onNameChanged(name: String) = _state.update { it.copy(name = name) }
+    fun onNameChanged(name: String) = _state.update { it.copy(name = name, nameError = null) }
     fun onCategoryChanged(category: Category) = _state.update { it.copy(category = category) }
     fun onQuantityChanged(quantity: Double) = _state.update { it.copy(quantity = quantity) }
     fun onUnitChanged(unit: FoodUnit) = _state.update { it.copy(unit = unit) }
@@ -85,6 +87,11 @@ class AddEditViewModel(
     }
 
     fun saveItem() {
+        if (_state.value.name.isBlank()) {
+            _state.update { it.copy(nameError = "Name is required") }
+            return
+        }
+
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
             val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
@@ -112,7 +119,7 @@ class AddEditViewModel(
             
             notificationScheduler.scheduleExpiryReminders(item)
 
-            _state.update { it.copy(isSaving = false) }
+            _state.update { it.copy(isSaving = false, isSaved = true) }
         }
     }
 }
