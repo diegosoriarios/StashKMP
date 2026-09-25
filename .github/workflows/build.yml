@@ -1,6 +1,10 @@
 name: Build App
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
   workflow_dispatch:
     inputs:
       version:
@@ -18,8 +22,32 @@ on:
           - Both
 
 jobs:
+  test:
+    # Run the shared-module test suite on pushes and PRs
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Android-target tests
+        run: ./gradlew :shared:testAndroidHostTest --no-daemon
+
+      - name: Run iOS-target tests
+        run: ./gradlew :shared:iosSimulatorArm64Test --no-daemon
+
   build-android:
-    if: ${{ github.event.inputs.platform == 'Android' || github.event.inputs.platform == 'Both' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'Android' || github.event.inputs.platform == 'Both') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -62,7 +90,7 @@ jobs:
           path: androidApp/build/outputs/apk/release/*.apk
 
   build-ios:
-    if: ${{ github.event.inputs.platform == 'iOS' || github.event.inputs.platform == 'Both' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'iOS' || github.event.inputs.platform == 'Both') }}
     runs-on: macos-latest
     steps:
       - name: Checkout

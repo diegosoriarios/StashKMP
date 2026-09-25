@@ -1,35 +1,77 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# Stash
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+A cross-platform **pantry & food-storage tracker** built with **Kotlin Multiplatform**.
+Know what you have, how much is left, and what expires soon — before it becomes waste.
 
-* [/sharedLogic](./sharedLogic/src) is for the code that will be shared between app targets in the project.
-  The most important subfolder is [commonMain](./sharedLogic/src/commonMain/kotlin). If preferred, you
-  can add code to the platform-specific folders here too.
+- **Android** — Jetpack Compose
+- **iOS** — SwiftUI
 
-* [/sharedUI](./sharedUI/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./sharedUI/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./sharedUI/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./sharedUI/src/jvmMain/kotlin)
-    folder is the appropriate location.
+## Features
 
-### Running the apps
+- **Dashboard** — items expiring in 3 / 7 / 30 days at a glance
+- **Inventory** — quantities, locations and expiry dates for everything in your stash
+- **Barcode scanning** — scan with the camera; product data autofills via
+  [Open Food Facts](https://world.openfoodfacts.org/)
+- **Expiry notifications** — local reminders before food goes bad
+- **Shared core** — one Kotlin business-logic layer for both platforms
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+## Architecture
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+```
+┌─────────────────┐     ┌─────────────────┐
+│  androidApp     │     │  iosApp         │
+│  Jetpack Compose│     │  SwiftUI        │
+└────────┬────────┘     └────────┬────────┘
+         └──────────┬────────────┘
+              ┌─────▼─────┐
+              │  :shared  │   Kotlin Multiplatform
+              │ SQLDelight│   Ktor · kotlinx-serialization
+              │   Koin    │   coroutines
+              └───────────┘
+```
 
-### Running tests
+- **Persistence**: SQLDelight
+- **Networking**: Ktor (OkHttp on Android, Darwin on iOS)
+- **DI**: Koin
+- **Scanning**: ML Kit + CameraX (Android)
 
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
+## Project structure
 
-- Android tests: `./gradlew :sharedUI:testAndroidHostTest :sharedLogic:testAndroidHostTest`
-- iOS tests: `./gradlew :sharedLogic:iosSimulatorArm64Test`
+| Path | What |
+|---|---|
+| `shared/` | KMP module: models, repositories, use cases, platform expectations |
+| `androidApp/` | Compose UI, navigation, barcode scanner, notifications |
+| `iosApp/` | SwiftUI app consuming the shared framework |
 
----
+## Building
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+### Android
+
+```bash
+./gradlew :androidApp:assembleDebug
+```
+
+### iOS
+
+Open `iosApp/iosApp.xcodeproj` in Xcode (framework is built automatically by the
+Gradle script phase), or build the shared framework first:
+
+```bash
+./gradlew :shared:assembleRelease
+```
+
+### Tests
+
+```bash
+./gradlew :shared:testAndroidHostTest    # Android-target tests (commonTest on JVM)
+./gradlew :shared:iosSimulatorArm64Test  # iOS-target tests (macOS + Xcode required)
+```
+
+## Releases
+
+CI (`.github/workflows/build.yml`) builds signed APKs and iOS archives via manual
+dispatch, and runs the test suite on pushes/PRs.
+
+## License
+
+_None yet — all rights reserved until a license is chosen._
