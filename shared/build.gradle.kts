@@ -22,7 +22,10 @@ kotlin {
        namespace = "org.diego.stash.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
-    
+
+       // Run commonTest sources on the host JVM via :shared:androidHostTest
+       withHostTestBuilder { }
+
        compilerOptions {
            jvmTarget = JvmTarget.JVM_11
        }

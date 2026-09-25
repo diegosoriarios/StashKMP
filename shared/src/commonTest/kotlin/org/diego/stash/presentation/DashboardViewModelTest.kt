@@ -1,20 +1,39 @@
 package org.diego.stash.presentation
 
 import app.cash.turbine.test
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.*
 import org.diego.stash.data.repository.FakeFoodRepository
 import org.diego.stash.domain.model.*
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class DashboardViewModelTest {
 
     private val repository = FakeFoodRepository()
-    private val viewModel = DashboardViewModel(repository)
+
+    @BeforeTest
+    fun setUp() {
+        // viewModelScope launches on Main; give it an eager test dispatcher
+        // so init/refresh effects settle synchronously before assertions
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     @Test
     fun `initial state is empty`() = runTest {
+        val viewModel = DashboardViewModel(repository)
+
         viewModel.state.test {
             val initialState = awaitItem()
             assertEquals(0, initialState.expiredCount)
@@ -25,7 +44,7 @@ class DashboardViewModelTest {
     @Test
     fun `refresh updates counts correctly`() = runTest {
         val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-        
+
         // Add expired item
         repository.insertItem(createItem("Expired", now.minus(1, DateTimeUnit.DAY)))
         // Add item expiring in 2 days
@@ -33,6 +52,7 @@ class DashboardViewModelTest {
         // Add item expiring in 5 days
         repository.insertItem(createItem("Soon", now.plus(5, DateTimeUnit.DAY)))
 
+        val viewModel = DashboardViewModel(repository)
         viewModel.refresh()
 
         viewModel.state.test {
