@@ -40,6 +40,17 @@ class AddEditViewModel(
     private val _state = MutableStateFlow(AddEditState())
     val state: StateFlow<AddEditState> = _state.asStateFlow()
 
+    fun observeState(onChange: (AddEditState) -> Unit): AutoCloseable {
+        val job = viewModelScope.launch {
+            state.collect { onChange(it) }
+        }
+        return object : AutoCloseable {
+            override fun close() {
+                job.cancel()
+            }
+        }
+    }
+
     fun loadItem(id: Long) {
         if (id == 0L) return
         viewModelScope.launch {

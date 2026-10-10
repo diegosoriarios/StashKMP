@@ -23,12 +23,21 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) =
 // ios
 fun initKoin() = initKoin {}
 
+fun getAddEditViewModel(): AddEditViewModel =
+    org.koin.mp.KoinPlatformTools.defaultContext().get().get()
+
+fun getInventoryViewModel(): InventoryViewModel =
+    org.koin.mp.KoinPlatformTools.defaultContext().get().get()
+
+fun getDashboardViewModel(): DashboardViewModel =
+    org.koin.mp.KoinPlatformTools.defaultContext().get().get()
+
 fun commonModule() = module {
     single { createHttpClient() }
     single { OpenFoodFactsApi(get()) }
     single<FoodRepository> { FoodRepositoryImpl(get(), get()) }
     single { StashDatabase(get()) }
-    
+
     factory { DashboardViewModel(get()) }
     factory { InventoryViewModel(get()) }
     factory { AddEditViewModel(get(), get()) }

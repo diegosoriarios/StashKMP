@@ -28,6 +28,17 @@ class InventoryViewModel(private val repository: FoodRepository) : ViewModel() {
     private val _state = MutableStateFlow(InventoryState())
     val state: StateFlow<InventoryState> = _state.asStateFlow()
 
+    fun observeState(onChange: (InventoryState) -> Unit): AutoCloseable {
+        val job = viewModelScope.launch {
+            state.collect { onChange(it) }
+        }
+        return object : AutoCloseable {
+            override fun close() {
+                job.cancel()
+            }
+        }
+    }
+
     init {
         loadItems()
         observeFilters()

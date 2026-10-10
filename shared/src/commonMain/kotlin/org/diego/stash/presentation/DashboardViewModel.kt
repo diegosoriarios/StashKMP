@@ -20,6 +20,17 @@ class DashboardViewModel(private val repository: FoodRepository) : ViewModel() {
     private val _state = MutableStateFlow(DashboardState())
     val state: StateFlow<DashboardState> = _state.asStateFlow()
 
+    fun observeState(onChange: (DashboardState) -> Unit): AutoCloseable {
+        val job = viewModelScope.launch {
+            state.collect { onChange(it) }
+        }
+        return object : AutoCloseable {
+            override fun close() {
+                job.cancel()
+            }
+        }
+    }
+
     init {
         refresh()
     }
