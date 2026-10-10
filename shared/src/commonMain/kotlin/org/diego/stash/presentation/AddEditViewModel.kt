@@ -27,7 +27,8 @@ data class AddEditState(
     val isScanning: Boolean = false,
     val isSaving: Boolean = false,
     val nameError: String? = null,
-    val error: String? = null,
+    val lookupMessage: String? = null,
+    val lookupIsError: Boolean = false,
     val isSaved: Boolean = false
 )
 
@@ -72,16 +73,29 @@ class AddEditViewModel(
 
     fun scanBarcode(barcode: String) {
         viewModelScope.launch {
-            _state.update { it.copy(isScanning = true, barcode = barcode) }
-            val item = repository.getProductByBarcode(barcode)
-            if (item != null) {
-                _state.update { it.copy(
-                    name = item.name,
-                    category = item.category,
-                    isScanning = false
-                ) }
-            } else {
-                _state.update { it.copy(isScanning = false, error = "Product not found") }
+            _state.update { it.copy(isScanning = true, barcode = barcode, lookupMessage = null, lookupIsError = false) }
+            when (val result = repository.getProductByBarcode(barcode)) {
+                is BarcodeLookupResult.Found -> _state.update {
+                    it.copy(
+                        name = result.item.name,
+                        category = result.item.category,
+                        isScanning = false
+                    )
+                }
+                BarcodeLookupResult.NotFound -> _state.update {
+                    it.copy(
+                        isScanning = false,
+                        lookupMessage = "Not in Open Food Facts. Fill in the name — the barcode is saved with the item.",
+                        lookupIsError = false
+                    )
+                }
+                BarcodeLookupResult.NetworkError -> _state.update {
+                    it.copy(
+                        isScanning = false,
+                        lookupMessage = "Couldn't reach the product database. Check your connection and scan again.",
+                        lookupIsError = true
+                    )
+                }
             }
         }
     }
@@ -110,13 +124,13 @@ class AddEditViewModel(
                 createdAt = now,
                 updatedAt = now
             )
-            
+
             if (item.id == 0L) {
                 repository.insertItem(item)
             } else {
                 repository.updateItem(item)
             }
-            
+
             notificationScheduler.scheduleExpiryReminders(item)
 
             _state.update { it.copy(isSaving = false, isSaved = true) }

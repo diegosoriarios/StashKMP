@@ -4,11 +4,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
+import org.diego.stash.domain.model.BarcodeLookupResult
 import org.diego.stash.domain.model.FoodItem
 import org.diego.stash.domain.repository.FoodRepository
 
 class FakeFoodRepository : FoodRepository {
     private val items = MutableStateFlow<List<FoodItem>>(emptyList())
+
+    var nextLookupResult: BarcodeLookupResult = BarcodeLookupResult.NotFound
+    var lastScannedBarcode: String? = null
+        private set
 
     override fun getAllItems(): Flow<List<FoodItem>> = items
 
@@ -40,8 +45,9 @@ class FakeFoodRepository : FoodRepository {
         items.value = items.value.filter { it.id != id }
     }
 
-    override suspend fun getProductByBarcode(barcode: String): FoodItem? {
-        return null // Mock as needed in tests
+    override suspend fun getProductByBarcode(barcode: String): BarcodeLookupResult {
+        lastScannedBarcode = barcode
+        return nextLookupResult
     }
 
     override fun getExpiringSoon(limitDate: LocalDate): Flow<List<FoodItem>> {

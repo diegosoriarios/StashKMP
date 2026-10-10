@@ -96,26 +96,32 @@ class FoodRepositoryImpl(
         )
     }
 
-    override suspend fun getProductByBarcode(barcode: String): FoodItem? {
-        val response = api.getProduct(barcode)
-        if (response?.status == 1 && response.product != null) {
+    override suspend fun getProductByBarcode(barcode: String): BarcodeLookupResult {
+        val response = try {
+            api.getProduct(barcode)
+        } catch (e: Exception) {
+            return BarcodeLookupResult.NetworkError
+        }
+        if (response.status == 1 && response.product != null) {
             val product = response.product
             val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-            return FoodItem(
-                name = product.productName ?: "Unknown",
-                category = mapCategoriesToEnum(product.categoriesTags),
-                quantity = 1.0,
-                unit = FoodUnit.UNITS,
-                storageLocation = StorageLocation.PANTRY,
-                purchaseDate = now.date,
-                expiryDate = now.date.plus(7, DateTimeUnit.DAY), // Default 1 week
-                expiryType = ExpiryType.BEST_BEFORE,
-                barcode = barcode,
-                createdAt = now,
-                updatedAt = now
+            return BarcodeLookupResult.Found(
+                FoodItem(
+                    name = product.productName ?: "Unknown",
+                    category = mapCategoriesToEnum(product.categoriesTags),
+                    quantity = 1.0,
+                    unit = FoodUnit.UNITS,
+                    storageLocation = StorageLocation.PANTRY,
+                    purchaseDate = now.date,
+                    expiryDate = now.date.plus(7, DateTimeUnit.DAY), // Default 1 week
+                    expiryType = ExpiryType.BEST_BEFORE,
+                    barcode = barcode,
+                    createdAt = now,
+                    updatedAt = now
+                )
             )
         }
-        return null
+        return BarcodeLookupResult.NotFound
     }
 
     override fun getExpiringSoon(limitDate: LocalDate): Flow<List<FoodItem>> {

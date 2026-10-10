@@ -120,8 +120,20 @@ fun AddEditScreen(navController: NavController, itemId: Long, viewModel: AddEdit
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
             }
             
-            state.error?.let { error ->
-                Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            state.lookupMessage?.let { message ->
+                Text(
+                    message,
+                    color = if (state.lookupIsError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            
+            if (state.barcode.isNotBlank()) {
+                Text(
+                    "Barcode: ${state.barcode}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             
             Spacer(modifier = Modifier.height(8.dp))
