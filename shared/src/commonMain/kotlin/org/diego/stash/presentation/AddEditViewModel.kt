@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.*
 import org.diego.stash.domain.model.*
 import org.diego.stash.domain.repository.FoodRepository
+import org.diego.stash.domain.repository.SettingsRepository
 import org.diego.stash.platform.NotificationScheduler
 
 data class AddEditState(
@@ -34,6 +35,7 @@ data class AddEditState(
 
 class AddEditViewModel(
     private val repository: FoodRepository,
+    private val settingsRepository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler
 ) : ViewModel() {
 
@@ -135,14 +137,14 @@ class AddEditViewModel(
                 createdAt = now,
                 updatedAt = now
             )
-
+            
             if (item.id == 0L) {
                 repository.insertItem(item)
             } else {
                 repository.updateItem(item)
             }
 
-            notificationScheduler.scheduleExpiryReminders(item)
+            notificationScheduler.scheduleExpiryReminders(item, settingsRepository.getReminderSettings())
 
             _state.update { it.copy(isSaving = false, isSaved = true) }
         }

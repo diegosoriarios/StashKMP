@@ -33,6 +33,10 @@ class FakeFoodRepository : FoodRepository {
         items.value = items.value.filter { it.id != id }
     }
 
+    override suspend fun clearAll() {
+        items.value = emptyList()
+    }
+
     override suspend fun updateQuantity(id: Long, quantity: Double) {
         items.value = items.value.map { if (it.id == id) it.copy(quantity = quantity) else it }
     }

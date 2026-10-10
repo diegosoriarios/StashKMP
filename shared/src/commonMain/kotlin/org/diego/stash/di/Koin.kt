@@ -3,8 +3,10 @@ package org.diego.stash.di
 import org.diego.stash.data.remote.OpenFoodFactsApi
 import org.diego.stash.data.remote.createHttpClient
 import org.diego.stash.data.repository.FoodRepositoryImpl
+import org.diego.stash.data.repository.SettingsRepositoryImpl
 import org.diego.stash.database.StashDatabase
 import org.diego.stash.domain.repository.FoodRepository
+import org.diego.stash.domain.repository.SettingsRepository
 import org.diego.stash.presentation.AddEditViewModel
 import org.diego.stash.presentation.DashboardViewModel
 import org.diego.stash.presentation.InventoryViewModel
@@ -32,16 +34,20 @@ fun getInventoryViewModel(): InventoryViewModel =
 fun getDashboardViewModel(): DashboardViewModel =
     org.koin.mp.KoinPlatformTools.defaultContext().get().get()
 
+fun getSettingsViewModel(): SettingsViewModel =
+    org.koin.mp.KoinPlatformTools.defaultContext().get().get()
+
 fun commonModule() = module {
     single { createHttpClient() }
     single { OpenFoodFactsApi(get()) }
     single<FoodRepository> { FoodRepositoryImpl(get(), get()) }
+    single<SettingsRepository> { SettingsRepositoryImpl(get()) }
     single { StashDatabase(get()) }
 
     factory { DashboardViewModel(get()) }
     factory { InventoryViewModel(get()) }
-    factory { AddEditViewModel(get(), get()) }
-    factory { SettingsViewModel(get(), get()) }
+    factory { AddEditViewModel(get(), get(), get()) }
+    factory { SettingsViewModel(get(), get(), get()) }
 }
 
 expect fun platformModule(): Module

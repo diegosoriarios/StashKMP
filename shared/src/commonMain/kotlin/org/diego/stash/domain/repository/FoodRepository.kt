@@ -11,12 +11,13 @@ interface FoodRepository {
     suspend fun insertItem(item: FoodItem)
     suspend fun updateItem(item: FoodItem)
     suspend fun deleteItem(id: Long)
+    suspend fun clearAll()
     suspend fun updateQuantity(id: Long, quantity: Double)
     suspend fun markAsConsumed(id: Long)
     suspend fun markAsDiscarded(id: Long, reason: String?)
-
+    
     suspend fun getProductByBarcode(barcode: String): BarcodeLookupResult
-
+    
     fun getExpiringSoon(limitDate: LocalDate): Flow<List<FoodItem>>
     suspend fun countExpired(date: LocalDate): Long
     suspend fun countExpiringBetween(start: LocalDate, end: LocalDate): Long

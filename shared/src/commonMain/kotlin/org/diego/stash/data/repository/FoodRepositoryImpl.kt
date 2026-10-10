@@ -73,6 +73,10 @@ class FoodRepositoryImpl(
         queries.deleteItem(id)
     }
 
+    override suspend fun clearAll() {
+        queries.clearAll()
+    }
+
     override suspend fun updateQuantity(id: Long, quantity: Double) {
         queries.updateQuantity(
             quantity = quantity,

@@ -60,3 +60,6 @@ countExpired:
 SELECT COUNT(*) FROM food_item
 WHERE status = 'ACTIVE'
 AND expiry_date < ?;
+
+clearAll:
+DELETE FROM food_item;
